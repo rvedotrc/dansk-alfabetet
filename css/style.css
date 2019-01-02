@@ -1,0 +1,46 @@
+body {
+  background-color: #E31836;
+}
+
+#audio {
+  display: none;
+}
+
+#wrap {
+  margin: 0 auto;
+}
+
+#letter {
+  margin-top: 50px;
+  border: 0;
+  outline: none;
+  background-color: #E31836;
+  text-align: center;
+  color: transparent;
+  font-size: 15em;
+  font-family: sans-serif;
+  text-shadow: 0 0 0 white, 2px 2px 10px #000;
+  width: 100%;
+}
+
+#people {
+  text-align: center;
+  margin: 2em;
+}
+
+#people li {
+  list-style: none;
+  display: inline;
+}
+
+.person {
+  margin: 1em;
+  width: 300px;
+  border-radius: 50px;
+  border: 10px solid #E31836;
+  cursor: pointer;
+}
+
+.person.active {
+  border: 10px solid rgba(0, 0, 0, 0.5);
+}
