@@ -4,6 +4,12 @@ var letter = document.getElementById('letter');
 var people = document.getElementById('people');
 var person = 'else';
 
+var letterMap = {
+  'æ': 'ae',
+  'ø': 'oe',
+  'å': 'aa',
+};
+
 activate(person);
 
 letter.onkeypress = function(e) {
@@ -25,6 +31,7 @@ letter.onkeypress = function(e) {
     // å = 229
     if((c >= 97 && c <= 122) || c == 229 || c == 230 || c == 248) {
       c = String.fromCharCode(c);
+      c = letterMap[c] || c;
       audio.src = 'audio/' + person + '/' + c + '.mp3'
       audio.load();
       audio.play();
