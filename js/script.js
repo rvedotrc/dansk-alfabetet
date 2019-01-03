@@ -4,6 +4,7 @@ var letter = document.getElementById('letter');
 var people = document.getElementById('people');
 var person = 'else';
 
+var alfabetet = 'abcdefghijklmnopqrstuvwxyzæøå';
 var letterMap = {
   'æ': 'ae',
   'ø': 'oe',
@@ -12,36 +13,42 @@ var letterMap = {
 
 activate(person);
 
-letter.onkeypress = function(e) {
-  e = e || window.event;
-  var c = (typeof e.which == "number") ? e.which : e.keyCode;
-  if (c) {
-    // A = 65
-    // Z = 90
-    // Æ = 198
-    // Ø = 216
-    // Å = 197
-    if((c >= 65 && c <= 90) || c == 197 || c == 198 || c == 216) {
-      c += 32;
-    }
-    // a = 97
-    // z = 122
-    // æ = 230
-    // ø = 248
-    // å = 229
-    if((c >= 97 && c <= 122) || c == 229 || c == 230 || c == 248) {
-      c = String.fromCharCode(c);
-      c = letterMap[c] || c;
-      audio.src = 'audio/' + person + '/' + c + '.mp3'
-      audio.load();
-      audio.play();
+var isPlayable = function(c) {
+  return (alfabetet.indexOf(c.toLowerCase()) >= 0);
+};
+
+var discardCharacter = function() {
+  letter.value = letter.value.substr(1);
+};
+
+var playLetter = function(c) {
+  var filename = letterMap[c.toLowerCase()] || c.toLowerCase();
+  audio.src = 'audio/' + person + '/' + filename + '.mp3'
+  audio.load();
+  audio.play();
+
+  audio.addEventListener('ended', function(e) {
+    if (letter.value[0] === c) discardCharacter();
+    nibble();
+  }, {once: true});
+};
+
+var nibble = function() {
+  if (!audio.paused) return;
+
+  while (letter.value.length > 0) {
+    var nextCharacter = letter.value[0];
+
+    if (isPlayable(nextCharacter)) {
+      playLetter(nextCharacter);
+      break;
+    } else {
+      discardCharacter();
     }
   }
 };
 
-audio.onended = function() {
-  letter.value = '';
-}
+setInterval(nibble, 100);
 
 people.onclick = function(e) {
   if(e.target.id && e.target.id != 'people') {
