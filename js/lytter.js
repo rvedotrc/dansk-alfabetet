@@ -97,12 +97,12 @@ var kunBogstavere = function(s) {
   return s.replace(ikkeBogstavere, '');
 };
 
-// Mobile?
-letter.addEventListener('keyup', function() {
+var tjekSvar = function() {
   if (kunBogstavere(letter.value) == rigtigtSvar) {
     letter.value = '';
     setTimeout(næsteSpørgsmål, 250);
   }
-});
+};
+setInterval(tjekSvar, 100);
 
 // vi: set sw=2 et :
