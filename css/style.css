@@ -23,9 +23,20 @@ body {
   width: 100%;
 }
 
+#knapper {
+  text-align: center;
+}
+
+#knapper input {
+  text-align: center;
+  font-size: 2em;
+  margin: 0.2em;
+}
+
 #people {
   text-align: center;
   margin: 2em;
+  padding: 0;
 }
 
 #people li {
