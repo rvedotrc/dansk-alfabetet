@@ -98,7 +98,7 @@ var kunBogstavere = function(s) {
 };
 
 var tjekSvar = function() {
-  if (kunBogstavere(letter.value) == rigtigtSvar) {
+  if (kunBogstavere(letter.value.toLowerCase()) == rigtigtSvar) {
     letter.value = '';
     setTimeout(næsteSpørgsmål, 250);
   }
