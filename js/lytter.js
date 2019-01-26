@@ -1,108 +1,227 @@
-var audio = document.getElementById('audio');
-var letter = document.getElementById('letter');
-var people = document.getElementById('people');
-var gentag = document.getElementById('gentag');
-var givop = document.getElementById('givop');
-var person = 'else';
+'use strict';
+
+var input = document.getElementById('letter');
+var gentagKnap = document.getElementById('gentag');
+var givOpKnap = document.getElementById('givop');
 
 var alfabetet = 'abcdefghijklmnopqrstuvwxyzæøå';
-var ikkeBogstavere = new RegExp("[^" + alfabetet + "]", 'g')
-var letterMap = {
+
+var kunBogstavere = function(s) {
+  var ikkeBogstavere = new RegExp("[^" + alfabetet + "]", 'g')
+  return s.replace(ikkeBogstavere, '');
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class BogstavSpiller {
+
+  constructor() {
+    this.audio = document.getElementById('audio');
+    this.stem = 'else';
+    this.stop();
+  }
+
+  sætStem(ny) {
+    if (ny != 'else' && ny != 'anne-katrine') throw 'Intet såden stem';
+    this.stem = ny;
+  }
+
+  spil(bogstav, naarFaerdigt) {
+    if (!naarFaerdigt) throw 'Intet callback';
+
+    bogstav = bogstav.toLowerCase();
+    if (alfabetet.indexOf(bogstav) < 0) {
+      naarFaerdigt();
+      return;
+    }
+
+    if (this.spillende) throw 'Allerede spillende';
+
+    var filename = BogstavSpiller.letterMap[bogstav] || bogstav;
+    this.audio.src = 'audio/' + this.stem + '/' + filename + '.mp3'
+    this.audio.load();
+    this.audio.play();
+    this.spillende = true;
+    this.naarFaerdigt = naarFaerdigt;
+
+    var t = this;
+    this.audio.addEventListener('ended', function(e) {
+      t.spillende = false;
+      var cb = t.naarFaerdigt;
+      t.naarFaerdigt = null;
+      cb();
+    }, {once: true});
+  }
+
+  stop() {
+    this.audio.pause();
+    this.spillende = false;
+    this.naarFaerdigt = null;
+  }
+}
+
+BogstavSpiller.letterMap = {
   'æ': 'ae',
   'ø': 'oe',
   'å': 'aa',
 };
 
-var rigtigtSvar;
+////////////////////////////////////////////////////////////////////////////////
 
-var lavSvar = function() {
-  var s = '';
-  var l = Math.random() * Math.random() * 5;
-  for (var i=0; i<l; ++i) {
-    s += alfabetet.charAt(Math.random() * alfabetet.length);
-  }
-  return s;
-};
-
-var næsteSpørgsmål = function() {
-  rigtigtSvar = lavSvar();
-  udspilBogstaver(rigtigtSvar);
-
-  givop.disabled = false;
-  letter.value = '';
-  letter.focus();
-};
-
-var udspilBogstav = function(c, cb) {
-  var filename = letterMap[c.toLowerCase()] || c.toLowerCase();
-  audio.src = 'audio/' + person + '/' + filename + '.mp3'
-  audio.load();
-  audio.play();
-
-  audio.addEventListener('ended', function(e) {
-    cb();
-  }, {once: true});
-};
-
-var udspilBogstaver = function(bogstaver) {
-  if (bogstaver == '') {
-    throw 'ingen bogstaver';
+class BogstaverSpiller {
+  constructor(bogstavSpiller) {
+    this.bogstavSpiller = bogstavSpiller;
+    this.tilbage = '';
+    this.naarFaerdigt = null;
   }
 
-  gentag.disabled = true;
+  hentSpillende() {
+    return this.bogstavSpiller.spillende || tilbage != '';
+  }
 
-  udspilBogstav(bogstaver.charAt(0), function () {
-    var sidste = bogstaver.substr(1);
-    if (sidste == '') {
-      gentag.disabled = false;
+  sætStem(ny) {
+    this.bogstavSpiller.sætStem(ny);
+  }
+
+  naesteBogstav() {
+    if (this.tilbage == '') {
+      var cb = this.naarFaerdigt;
+      this.naarFaerdigt = null;
+      cb();
     } else {
-      udspilBogstaver(sidste);
+      var n = this.tilbage.charAt(0);
+      this.tilbage = this.tilbage.substr(1);
+      var t = this;
+      this.bogstavSpiller.spil(n, function () { t.naesteBogstav(); });
     }
-  });
-};
-
-var activate = function(person) {
-  var active = document.getElementsByClassName('active');
-  for (var i = active.length - 1; i >= 0; i--) {
-    active[i].classList = 'person';
   }
-  var target = document.getElementById(person);
-  target.classList.add('active');
 
-  letter.focus();
-};
-
-activate(person);
-gentag.disabled = true;
-givop.disabled = true;
-næsteSpørgsmål();
-
-gentag.addEventListener('click', function() {
-  udspilBogstaver(rigtigtSvar);
-});
-
-givop.addEventListener('click', function() {
-  letter.value = rigtigtSvar;
-  setTimeout(næsteSpørgsmål, 1000);
-});
-
-people.addEventListener('click', function(e) {
-  if (e.target.id && e.target.id != 'people') {
-    person = e.target.id;
-    activate(person);
+  spil(bogstaver, naarFaerdigt) {
+    if (this.spillende) throw 'Allerede spillende';
+    this.tilbage = bogstaver;
+    this.naarFaerdigt = naarFaerdigt;
+    this.naesteBogstav();
   }
-});
 
-var kunBogstavere = function(s) {
-  return s.replace(ikkeBogstavere, '');
-};
-
-var tjekSvar = function() {
-  if (kunBogstavere(letter.value.toLowerCase()) == rigtigtSvar) {
-    letter.value = '';
-    setTimeout(næsteSpørgsmål, 250);
+  stop() {
+    this.bogstaver.stop();
+    this.tilbage = '';
+    this.naarFaerdigt = null;
   }
-};
-setInterval(tjekSvar, 100);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+class StemVaelger {
+  valg(person) {
+    var active = document.getElementsByClassName('active');
+    for (var i = active.length - 1; i >= 0; i--) {
+      active[i].classList = 'person';
+    }
+    var target = document.getElementById(person);
+    target.classList.add('active');
+    this.cb(person);
+  }
+
+  constructor(cb) {
+    this.cb = cb;
+
+    var t = this;
+    var people = document.getElementById('people');
+    people.addEventListener('click', function(e) {
+      if (e.target.id && e.target.id != 'people') {
+        t.valg(e.target.id);
+      }
+      input.focus();
+    });
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+class LytterSpil {
+  constructor(bogstaverSpiller, stemVælger) {
+    this.rigtigtSvar = null;
+    this.timer = null;
+    this.bogstaverSpiller = bogstaverSpiller;
+    this.stemVælger = stemVælger;
+  }
+
+  lavSvar() {
+    var s = '';
+    var l = Math.random() * Math.random() * 5;
+    for (var i=0; i<l; ++i) {
+      s += alfabetet.charAt(Math.random() * alfabetet.length);
+    }
+    return s;
+  }
+
+  næsteSpørgsmål() {
+    this.rigtigtSvar = this.lavSvar();
+    input.value = '';
+    this.begyndAtTjekke();
+    this.udspil();
+    input.focus();
+    givOpKnap.disabled = false;
+    gentagKnap.disabled = false;
+  }
+
+  begyndAtTjekke() {
+    var t = this;
+    this.timer = setInterval(function () { t.tjekSvar(); }, 100);
+  }
+
+  stoppeAtTjekke() {
+    clearInterval(this.timer);
+    this.timer = null;
+  }
+
+  udspil() {
+    this.bogstaverSpiller.spil(this.rigtigtSvar, function () {
+    });
+  }
+
+  tjekSvar() {
+    if (kunBogstavere(input.value.toLowerCase()) == this.rigtigtSvar) {
+      givOpKnap.disabled = true;
+      gentagKnap.disabled = true;
+      this.stoppeAtTjekke();
+      input.blur();
+      input.value = '🇩🇰';
+      var t = this; setTimeout(function () { t.næsteSpørgsmål(); }, 1000);
+    }
+  }
+
+  givOp() {
+    givOpKnap.disabled = true;
+    gentagKnap.disabled = true;
+    this.stoppeAtTjekke();
+    input.blur();
+    input.value = this.rigtigtSvar;
+    var t = this; setTimeout(function() { t.næsteSpørgsmål(); }, 1000);
+  }
+
+  gentag() {
+    this.udspil();
+    input.focus();
+  }
+
+  begyn() {
+    this.stemVælger.valg('else');
+    gentagKnap.disabled = true;
+    givOpKnap.disabled = true;
+    this.næsteSpørgsmål();
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+var bogstaverSpiller = new BogstaverSpiller(new BogstavSpiller());
+var stemVælger = new StemVaelger(function(stem) { bogstaverSpiller.sætStem(stem) });
+var lytterSpil = new LytterSpil(bogstaverSpiller, stemVælger);
+lytterSpil.begyn();
+
+givOpKnap.addEventListener('click', function() { lytterSpil.givOp(); });
+gentagKnap.addEventListener('click', function() { lytterSpil.gentag(); });
 
 // vi: set sw=2 et :
