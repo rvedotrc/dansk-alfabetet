@@ -1,8 +1,8 @@
 'use strict';
 
-var input = document.getElementById('letter');
-var gentagKnap = document.getElementById('gentag');
-var givOpKnap = document.getElementById('givop');
+var input;
+var gentagKnap;
+var givOpKnap;
 
 var alfabetet = 'abcdefghijklmnopqrstuvwxyzæøå';
 
@@ -216,12 +216,17 @@ class LytterSpil {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-var bogstaverSpiller = new BogstaverSpiller(new BogstavSpiller());
-var stemVælger = new StemVaelger(function(stem) { bogstaverSpiller.sætStem(stem) });
-var lytterSpil = new LytterSpil(bogstaverSpiller, stemVælger);
-lytterSpil.begyn();
+document.addEventListener('DOMContentLoaded', function () {
+  input = document.getElementById('letter');
+  gentagKnap = document.getElementById('gentag');
+  givOpKnap = document.getElementById('givop');
 
-givOpKnap.addEventListener('click', function() { lytterSpil.givOp(); });
-gentagKnap.addEventListener('click', function() { lytterSpil.gentag(); });
+  var bogstaverSpiller = new BogstaverSpiller(new BogstavSpiller());
+  var stemVælger = new StemVaelger(function(stem) { bogstaverSpiller.sætStem(stem) });
+  var lytterSpil = new LytterSpil(bogstaverSpiller, stemVælger);
+  givOpKnap.addEventListener('click', function() { lytterSpil.givOp(); });
+  gentagKnap.addEventListener('click', function() { lytterSpil.gentag(); });
+  lytterSpil.begyn();
+});
 
 // vi: set sw=2 et :
