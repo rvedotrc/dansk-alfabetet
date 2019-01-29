@@ -210,7 +210,11 @@ class LytterSpil {
     this.stemVælger.valg('else');
     gentagKnap.disabled = true;
     givOpKnap.disabled = true;
-    this.næsteSpørgsmål();
+
+    // Eksplicit handling kræves af brugeren
+    // https://bugs.chromium.org/p/chromium/issues/detail?id=138132
+    input.value = '[tryk]';
+    var t = this; input.addEventListener('click', function() { t.næsteSpørgsmål(); }, {once: true});
   }
 }
 
